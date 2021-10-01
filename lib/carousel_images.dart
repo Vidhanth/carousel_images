@@ -66,7 +66,7 @@ class CarouselImages extends StatefulWidget {
     this.autoPlay = false,
     this.autoPlayInterval,
     this.autoPlayCurve = Curves.fastOutSlowIn,
-    this.infinite,
+    this.infinite = true,
     this.controller,
     this.autoPlayDuration,
   })  : assert(scaleFactor > 0.0),
@@ -91,6 +91,8 @@ class _CarouselImagesState extends State<CarouselImages> {
     _pageController.addListener(() {
       setState(() {
         _currentPageValue = _pageController.page!;
+        autoPlayTimer?.cancel();
+        autoPlayTimer = null;
       });
     });
     if (widget.controller != null) {
@@ -138,105 +140,88 @@ class _CarouselImagesState extends State<CarouselImages> {
               onHorizontalDragEnd: (d) {
                 overrideTimer = false;
               },
-              child: Listener(
-                onPointerSignal: (signal) {
-                  if (signal is PointerScrollEvent) {
-                    if (signal.scrollDelta.dx == 0 &&
-                        signal.scrollDelta.dy == 0) {
-                      overrideTimer = false;
-                    } else {
-                      overrideTimer = true;
-                    }
-                  }
-                },
-                child: PageView.builder(
-                  physics: BouncingScrollPhysics(),
-                  controller: _pageController,
-                  itemCount: widget.listImages.length,
-                  itemBuilder: (context, position) {
-                    double value = (1 -
-                            ((_currentPageValue - position).abs() *
-                                (1 - widget.scaleFactor)))
-                        .clamp(0.0, 1.0);
-                    return Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 5.0),
-                      child: Stack(
-                        children: <Widget>[
-                          SizedBox(
-                              height:
-                                  Curves.ease.transform(value) * widget.height,
-                              child: child),
-                          Align(
-                            alignment: widget.verticalAlignment != null
-                                ? widget.verticalAlignment!
-                                : Alignment.center,
-                            child: SizedBox(
-                              height:
-                                  Curves.ease.transform(value) * widget.height,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(
-                                    widget.borderRadius != null
-                                        ? widget.borderRadius!
-                                        : 16.0),
-                                child: Transform.translate(
-                                    offset: Offset(
-                                        (_currentPageValue - position) *
-                                            width /
-                                            4 *
-                                            math.pow(
-                                                widget.viewportFraction, 3),
-                                        0),
-                                    child: widget.listImages[position]
-                                            .startsWith('http')
-                                        ? widget.cachedNetworkImage
-                                            ? CachedNetworkImage(
-                                                imageUrl:
-                                                    widget.listImages[position],
-                                                imageBuilder:
-                                                    (context, image) =>
-                                                        GestureDetector(
-                                                  onTap: () {
-                                                    widget.onTap
-                                                        ?.call(position);
-                                                    overrideTimer = false;
-                                                  },
-                                                  child: Image(
-                                                      image: image,
-                                                      fit: BoxFit.fitHeight),
-                                                ),
-                                              )
-                                            : GestureDetector(
+              child: PageView.builder(
+                physics: BouncingScrollPhysics(),
+                controller: _pageController,
+                itemCount: widget.listImages.length,
+                itemBuilder: (context, position) {
+                  double value = (1 -
+                          ((_currentPageValue - position).abs() *
+                              (1 - widget.scaleFactor)))
+                      .clamp(0.0, 1.0);
+                  return Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5.0),
+                    child: Stack(
+                      children: <Widget>[
+                        SizedBox(
+                            height:
+                                Curves.ease.transform(value) * widget.height,
+                            child: child),
+                        Align(
+                          alignment: widget.verticalAlignment != null
+                              ? widget.verticalAlignment!
+                              : Alignment.center,
+                          child: SizedBox(
+                            height:
+                                Curves.ease.transform(value) * widget.height,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                  widget.borderRadius != null
+                                      ? widget.borderRadius!
+                                      : 16.0),
+                              child: Transform.translate(
+                                  offset: Offset(
+                                      (_currentPageValue - position) *
+                                          width /
+                                          4 *
+                                          math.pow(widget.viewportFraction, 3),
+                                      0),
+                                  child: widget.listImages[position]
+                                          .startsWith('http')
+                                      ? widget.cachedNetworkImage
+                                          ? CachedNetworkImage(
+                                              imageUrl:
+                                                  widget.listImages[position],
+                                              imageBuilder: (context, image) =>
+                                                  GestureDetector(
                                                 onTap: () {
                                                   widget.onTap?.call(position);
                                                   overrideTimer = false;
                                                 },
-                                                child:
-                                                    FadeInImage.memoryNetwork(
-                                                  placeholder:
-                                                      kTransparentImage,
-                                                  image: widget
-                                                      .listImages[position],
-                                                  fit: BoxFit.fitHeight,
-                                                ),
-                                              )
-                                        : GestureDetector(
-                                            onTap: () {
-                                              widget.onTap?.call(position);
-                                              overrideTimer = false;
-                                            },
-                                            child: Image.asset(
-                                              widget.listImages[position],
-                                              fit: BoxFit.fitHeight,
-                                            ),
-                                          )),
-                              ),
+                                                child: Image(
+                                                    image: image,
+                                                    fit: BoxFit.fitHeight),
+                                              ),
+                                            )
+                                          : GestureDetector(
+                                              onTap: () {
+                                                widget.onTap?.call(position);
+                                                overrideTimer = false;
+                                              },
+                                              child: FadeInImage.memoryNetwork(
+                                                placeholder: kTransparentImage,
+                                                image:
+                                                    widget.listImages[position],
+                                                fit: BoxFit.fitHeight,
+                                              ),
+                                            )
+                                      : GestureDetector(
+                                          onTap: () {
+                                            widget.onTap?.call(position);
+                                            overrideTimer = false;
+                                          },
+                                          child: Image.asset(
+                                            widget.listImages[position],
+                                            fit: BoxFit.fitHeight,
+                                          ),
+                                        )),
                             ),
-                          )
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                          ),
+                        )
+                      ],
+                    ),
+                  );
+                },
               ),
             );
           },
@@ -247,6 +232,8 @@ class _CarouselImagesState extends State<CarouselImages> {
 
   void setupController() {
     widget.controller!.previousPage = ({Curve? curve, Duration? duration}) {
+      autoPlayTimer?.cancel();
+      autoPlayTimer = null;
       int index = _currentPageValue.toInt();
       if (index == 0 && (widget.infinite ?? false)) {
         _currentPageValue = widget.listImages.length - 1;
@@ -264,6 +251,8 @@ class _CarouselImagesState extends State<CarouselImages> {
       }
     };
     widget.controller!.nextPage = ({Curve? curve, Duration? duration}) {
+      autoPlayTimer?.cancel();
+      autoPlayTimer = null;
       int index = _currentPageValue.toInt();
       if (index == (widget.listImages.length - 1) &&
           (widget.infinite ?? false)) {
@@ -282,6 +271,8 @@ class _CarouselImagesState extends State<CarouselImages> {
       }
     };
     widget.controller!.goToPage = (index, {Curve? curve, Duration? duration}) {
+      autoPlayTimer?.cancel();
+      autoPlayTimer = null;
       _pageController.animateToPage(
         index,
         duration: duration ?? Duration(milliseconds: 400),

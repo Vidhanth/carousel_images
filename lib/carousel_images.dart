@@ -53,6 +53,9 @@ class CarouselImages extends StatefulWidget {
   ///Make carousel infinite
   final bool? infinite;
 
+  ///Starting page
+  final int initialPage;
+
   const CarouselImages({
     Key? key,
     required this.listImages,
@@ -69,6 +72,7 @@ class CarouselImages extends StatefulWidget {
     this.infinite = true,
     this.controller,
     this.autoPlayDuration,
+    this.initialPage = 0,
   })  : assert(scaleFactor > 0.0),
         assert(scaleFactor <= 1.0),
         super(key: key);
@@ -87,7 +91,10 @@ class _CarouselImagesState extends State<CarouselImages> {
   void initState() {
     super.initState();
     _pageController = PageController(
-        viewportFraction: widget.viewportFraction.clamp(0.5, 1.0));
+      viewportFraction: widget.viewportFraction.clamp(0.5, 1.0),
+      initialPage: widget.initialPage,
+    );
+    _currentPageValue = widget.initialPage * 1.0;
     _pageController.addListener(() {
       setState(() {
         _currentPageValue = _pageController.page!;

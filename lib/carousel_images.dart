@@ -56,6 +56,9 @@ class CarouselImages extends StatefulWidget {
   ///Starting page
   final int initialPage;
 
+  ///Custom builder
+  final Widget Function(BuildContext, int)? customBuilder;
+
   const CarouselImages({
     Key? key,
     required this.listImages,
@@ -73,6 +76,7 @@ class CarouselImages extends StatefulWidget {
     this.controller,
     this.autoPlayDuration,
     this.initialPage = 0,
+    this.customBuilder,
   })  : assert(scaleFactor > 0.0),
         assert(scaleFactor <= 1.0),
         super(key: key);
@@ -183,45 +187,59 @@ class _CarouselImagesState extends State<CarouselImages> {
                                           4 *
                                           math.pow(widget.viewportFraction, 3),
                                       0),
-                                  child: widget.listImages[position]
-                                          .startsWith('http')
-                                      ? widget.cachedNetworkImage
-                                          ? CachedNetworkImage(
-                                              imageUrl:
-                                                  widget.listImages[position],
-                                              imageBuilder: (context, image) =>
-                                                  GestureDetector(
-                                                onTap: () {
-                                                  widget.onTap?.call(position);
-                                                  overrideTimer = false;
-                                                },
-                                                child: Image(
-                                                    image: image,
-                                                    fit: BoxFit.fitHeight),
-                                              ),
-                                            )
+                                  child: widget.customBuilder != null
+                                      ? GestureDetector(
+                                          onTap: () {
+                                            widget.onTap?.call(position);
+                                            overrideTimer = false;
+                                          },
+                                          child: widget.customBuilder!
+                                              .call(context, position),
+                                        )
+                                      : widget.listImages[position]
+                                              .startsWith('http')
+                                          ? widget.cachedNetworkImage
+                                              ? CachedNetworkImage(
+                                                  imageUrl: widget
+                                                      .listImages[position],
+                                                  imageBuilder:
+                                                      (context, image) =>
+                                                          GestureDetector(
+                                                    onTap: () {
+                                                      widget.onTap
+                                                          ?.call(position);
+                                                      overrideTimer = false;
+                                                    },
+                                                    child: Image(
+                                                        image: image,
+                                                        fit: BoxFit.fitHeight),
+                                                  ),
+                                                )
+                                              : GestureDetector(
+                                                  onTap: () {
+                                                    widget.onTap
+                                                        ?.call(position);
+                                                    overrideTimer = false;
+                                                  },
+                                                  child:
+                                                      FadeInImage.memoryNetwork(
+                                                    placeholder:
+                                                        kTransparentImage,
+                                                    image: widget
+                                                        .listImages[position],
+                                                    fit: BoxFit.fitHeight,
+                                                  ),
+                                                )
                                           : GestureDetector(
                                               onTap: () {
                                                 widget.onTap?.call(position);
                                                 overrideTimer = false;
                                               },
-                                              child: FadeInImage.memoryNetwork(
-                                                placeholder: kTransparentImage,
-                                                image:
-                                                    widget.listImages[position],
+                                              child: Image.asset(
+                                                widget.listImages[position],
                                                 fit: BoxFit.fitHeight,
                                               ),
-                                            )
-                                      : GestureDetector(
-                                          onTap: () {
-                                            widget.onTap?.call(position);
-                                            overrideTimer = false;
-                                          },
-                                          child: Image.asset(
-                                            widget.listImages[position],
-                                            fit: BoxFit.fitHeight,
-                                          ),
-                                        )),
+                                            )),
                             ),
                           ),
                         )
